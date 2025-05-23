@@ -12,7 +12,7 @@ pipeline {
         stage("Hello") {
             steps {
                 script {
-                    hello()
+                    hello() // Assuming 'hello()' is defined in your 'shared' library and is approved
                 }
             }
         }
@@ -20,6 +20,7 @@ pipeline {
         stage('Clone Code') {
             steps {
                 echo 'Cloning repository...'
+                // Using the built-in 'git' step directly, as it's typically sufficient
                 git url: "https://github.com/omkar2781/django-notes-app.git", branch: "main"
                 echo 'Repository cloned.'
             }
@@ -41,8 +42,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // This is where 'docker_built' was changed to 'docker_build'
-                    docker_build(ProjectName:"notes-app", ImageTag:"latest", DockerHubUser: "omkar2781")
+                    // Calling docker_build with positional arguments as per your shared library definition
+                    docker_build("notes-app", "latest", "omkar2781")
                 }
             }
         }
@@ -50,7 +51,9 @@ pipeline {
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    docker_push(ProjectName:"notes-app", ImageTag: "latest", DockerHubUser: "omkar2781", credentialsId: "dockerhub")
+                    // Calling docker_push with positional arguments as per your shared library definition
+                    // The order must match: Project, ImageTag, dockerhubUser, dockerhubcred
+                    docker_push("notes-app", "latest", "omkar2781", "dockerhub")
                 }
             }
         }
@@ -58,15 +61,10 @@ pipeline {
         stage('Deploy') {
             steps {
                 echo 'Deploying application with Docker Compose...'
-                sh '''
-                    docker stop notes-app || true
-                    docker rm notes-app || true
-
-                    docker stop db_cont || true
-                    docker rm db_cont || true
-
-                    docker compose up -d
-                '''
+                // Using the custom docker_compose shared library step
+                script {
+                    docker_compose()
+                }
             }
         }
     }
