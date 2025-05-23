@@ -8,12 +8,11 @@ pipeline {
         IMAGE_NAME = 'notes-app'
     }
 
-    stages { // Main stages block starts here
-
+    stages {
         stage("Hello") {
             steps {
                 script {
-                    hello() // Assuming 'hello()' is defined in your 'shared' library
+                    hello()
                 }
             }
         }
@@ -21,14 +20,8 @@ pipeline {
         stage('Clone Code') {
             steps {
                 echo 'Cloning repository...'
-                // Assuming 'git' step is preferred, or if 'clone' is a custom shared library step, use named parameters.
-                // Example using the built-in 'git' step:
                 git url: "https://github.com/omkar2781/django-notes-app.git", branch: "main"
-                // If 'clone' is a custom shared library step, it should look like:
-                // script {
-                //     clone(url: "https://github.com/omkar2781/django-notes-app.git", branch: "main")
-                // }
-                echo 'Repository cloned.' // This was originally outside the steps block, moved it in.
+                echo 'Repository cloned.'
             }
         }
 
@@ -48,8 +41,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Assuming 'docker_built' takes named parameters like this. Adjust if different.
-                    docker_built(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781")
+                    // This is where 'docker_built' was changed to 'docker_build'
+                    docker_build(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781")
                 }
             }
         }
@@ -57,10 +50,7 @@ pipeline {
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    // Assuming 'docker_push' takes named parameters like this. Adjust if different.
                     docker_push(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781", credentialsId: "dockerhub")
-                    // Note: If docker_push handles the login, you don't need 'withCredentials' here.
-                    // If it expects credentials to be pre-logged in, the 'withCredentials' block is needed.
                 }
             }
         }
@@ -79,5 +69,5 @@ pipeline {
                 '''
             }
         }
-    } // Main stages block ends here
+    }
 }
