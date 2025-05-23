@@ -42,7 +42,7 @@ pipeline {
             steps {
                 script {
                     // This is where 'docker_built' was changed to 'docker_build'
-                    docker_build(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781")
+                    docker_build(ProjectName:"notes-app", ImageTag:"latest", DockerHubUser: "omkar2781")
                 }
             }
         }
@@ -50,7 +50,7 @@ pipeline {
         stage('Push Docker Image to Docker Hub') {
             steps {
                 script {
-                    docker_push(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781", credentialsId: "dockerhub")
+                    docker_push(ProjectName:"notes-app", ImageTag: "latest", DockerHubUser: "omkar2781", credentialsId: "dockerhub")
                 }
             }
         }
