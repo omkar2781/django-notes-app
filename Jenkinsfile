@@ -1,15 +1,16 @@
-@Library("shared") _ // Ensure this is @Library, not @Liabrary
+@Library("shared") _
 pipeline {
     agent {
-        label 'vinod'    // This is the *only* thing that should be directly in the agent block for a 'label' agent.
+        label 'vinod'
     }
 
     environment {
         IMAGE_NAME = 'notes-app'
     }
 
-    stages { // This is the main 'stages' block for the entire pipeline
-        stage("Hello") { // Your "Hello" stage, now correctly placed
+    stages { // Main stages block starts here
+
+        stage("Hello") {
             steps {
                 script {
                     hello() // Assuming 'hello()' is defined in your 'shared' library
@@ -20,8 +21,14 @@ pipeline {
         stage('Clone Code') {
             steps {
                 echo 'Cloning repository...'
+                // Assuming 'git' step is preferred, or if 'clone' is a custom shared library step, use named parameters.
+                // Example using the built-in 'git' step:
                 git url: "https://github.com/omkar2781/django-notes-app.git", branch: "main"
-                echo 'Repository cloned.'
+                // If 'clone' is a custom shared library step, it should look like:
+                // script {
+                //     clone(url: "https://github.com/omkar2781/django-notes-app.git", branch: "main")
+                // }
+                echo 'Repository cloned.' // This was originally outside the steps block, moved it in.
             }
         }
 
@@ -40,22 +47,20 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo 'Building Docker image...'
-                sh '''
-                    docker build -t $IMAGE_NAME:latest .
-                '''
+                script {
+                    // Assuming 'docker_built' takes named parameters like this. Adjust if different.
+                    docker_built(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781")
+                }
             }
         }
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                echo 'Pushing Docker image to Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'dockerHubUser', passwordVariable: 'dockerHubPass')]) {
-                    sh '''
-                        echo "$dockerHubPass" | docker login -u "$dockerHubUser" --password-stdin
-                        docker tag $IMAGE_NAME:latest $dockerHubUser/$IMAGE_NAME:latest
-                        docker push $dockerHubUser/$IMAGE_NAME:latest
-                    '''
+                script {
+                    // Assuming 'docker_push' takes named parameters like this. Adjust if different.
+                    docker_push(imageName: "notes-app", tag: "latest", dockerUser: "omkar2781", credentialsId: "dockerhub")
+                    // Note: If docker_push handles the login, you don't need 'withCredentials' here.
+                    // If it expects credentials to be pre-logged in, the 'withCredentials' block is needed.
                 }
             }
         }
@@ -64,18 +69,15 @@ pipeline {
             steps {
                 echo 'Deploying application with Docker Compose...'
                 sh '''
-                    # Stop and remove the notes-app container (if defined in Dockerfile or directly run)
                     docker stop notes-app || true
                     docker rm notes-app || true
 
-                    # --- ADDED THESE LINES TO CLEAN UP db_cont ---
                     docker stop db_cont || true
                     docker rm db_cont || true
-                    # --- END ADDED LINES ---
 
                     docker compose up -d
                 '''
             }
         }
-    }
+    } // Main stages block ends here
 }
